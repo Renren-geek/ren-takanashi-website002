@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+
+  <!-- jQuery -->
+  <script src="js/jquery-2.1.3.min.js"></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 既存CSS -->
+  <link rel="stylesheet" href="css/sample.css">
+
+  <title>社内承認を取得せよ</title>
+</head>
+<body class="min-h-screen text-white flex flex-col relative">
+
+  <!-- 背景 -->
+  <div class="fixed inset-0 -z-10">
+    <img src="img/meeting_room.jpg" alt="会議室" class="w-full h-full object-cover">
+    <div class="absolute inset-0 bg-slate-900/20"></div>
+  </div>
+
+  <!-- ===== スタート画面 ===== -->
+  <div id="startScreen"
+       class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+    <div class="bg-slate-800/90 border border-slate-600 rounded-2xl px-6 py-6 max-w-lg w-[90%] max-h-[85vh] overflow-y-auto text-center">
+
+      <h1 class="text-2xl font-bold mb-4">社内承認を取得せよ</h1>
+
+      <!-- 導入（中央寄せ） -->
+      <div class="text-sm mb-6 leading-normal">
+        社内承認を取得するのって、本当に大変ですよね……。<br>
+        このゲームでは、そんな<strong>「社内承認取得の大変さ」</strong>を疑似体験できます。
+      </div>
+
+      <hr class="border-slate-600 mb-6">
+
+      <!-- 左寄せブロック -->
+      <div class="text-left">
+
+        <!-- ゲーム概要 -->
+        <h3 class="text-base font-bold mb-2">■ ゲーム概要</h3>
+        <div class="text-sm mb-6 leading-normal">
+          担当者（高梨）が、承認ルートを順番に駆け上がります。<br>
+          フロー：課長 → 次長 → 部長 → 管理部長 → 本部長 → GCEO → 社長室会<br>
+          各ステップの上司とじゃんけん(=承認依頼)を行い、<strong>全員に連続で勝利(=承認取得)</strong>するとクリアです。
+        </div>
+
+        <!-- 負けた場合 -->
+        <h3 class="text-base font-bold mb-2">■ 負けた場合</h3>
+        <div class="text-sm mb-6 leading-normal">
+          負けた瞬間、承認は差戻しとなり、対戦相手は<strong>再び課長にリセット</strong>されます(また１からやり直し...)。
+        </div>
+
+        <!-- 救済イベント -->
+        <h3 class="text-base font-bold mb-2">■ 救済イベント（部長の根回し）</h3>
+        <div class="text-sm mb-6 leading-normal">
+          ただし、<strong>管理部長以上のステージで複数回負ける(=差戻し)</strong>と、部長が水面下で根回ししてくれます(部長優しい...)。<br>
+          次回からは<strong>上位ステージスタート</strong>で再チャレンジ(=再経伺)できます。
+        </div>
+      </div>
+
+      <hr class="border-slate-600 mb-6">
+
+      <!-- 締め（中央寄せ） -->
+      <div class="text-sm mb-6 leading-normal">
+        すべての関門を乗り越え、社内承認を取得できるか。<br>
+        高梨の行く末は、あなたのじゃんけん次第です！
+      </div>
+
+      <button id="startBtn"
+              class="px-6 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-semibold shadow">
+        スタート
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ===== ヘッダー ===== -->
+  <header class="py-4 px-6 bg-slate-950/80 border-b border-slate-700">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <h1 class="text-xl font-bold tracking-wider">社内承認を取得せよ</h1>
+      <div class="text-xs text-slate-300 space-y-1 text-right">
+        <div>ステージ：<span id="stageLabel" class="font-semibold">課長 (1 / 7)</span></div>
+        <div>管理部長以上での敗北：<span id="highLossCount" class="font-semibold">0</span> / <span id="highLossLimit">3</span></div>
+        <div>難易度：<span id="difficultyLabel" class="font-semibold">やさしい</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== メイン ===== -->
+  <main class="flex-1 flex items-center px-4 py-6">
+    <div class="max-w-5xl mx-auto w-full space-y-6">
+
+      <!-- 承認フローステップバー -->
+      <section class="bg-slate-950/70 border border-slate-700 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs font-semibold text-slate-200 tracking-wide">
+            社内承認フロー
+          </h2>
+          <p class="text-[10px] text-slate-400">
+            今どの関門にいるか、こちらでわかります！
+          </p>
+        </div>
+        <div class="flex items-center gap-1">
+          <ol class="flex w-full relative">
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              課長
+            </li>
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              次長
+            </li>
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              部長
+            </li>
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              管理部長
+            </li>
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              本部長
+            </li>
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              GCEO
+            </li>
+            <li class="approval-step flex-1 text-center text-[10px] md:text-xs py-1 mx-0.5 rounded-full border border-slate-600/60 bg-slate-900/60">
+              社長室会
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 高梨 vs 上司 -->
+      <section class="bg-slate-950/60 border border-slate-700 rounded-2xl p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <!-- 左：高梨 -->
+          <div class="flex flex-col items-center">
+            <img src="img/takanashi.png"
+                 alt="高梨"
+                 class="w-40 h-40 rounded-full object-cover border border-red-400 shadow mb-3">
+            <div class="text-lg font-semibold">高梨</div>
+            <div class="text-xs text-slate-300 mt-1">挑戦者</div>
+          </div>
+
+          <!-- 右：対戦相手（上司） -->
+          <div class="flex flex-col items-center">
+            <img id="bossImage"
+                 src="img/kacho.png"
+                 alt="対戦相手"
+                 class="w-40 h-40 rounded-full object-cover border border-indigo-400 shadow mb-3">
+            <div id="bossName" class="text-lg font-semibold">課長</div>
+            <div id="bossRole" class="text-xs text-slate-300 mt-1">第一関門</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- じゃんけんボタン & 判定エリア -->
+      <section class="bg-slate-950/60 border border-slate-700 rounded-2xl p-6 space-y-4">
+        <!-- ボタン -->
+        <ul class="flex justify-center gap-4 mb-4">
+          <li id="gu_btn"
+              class="cursor-pointer bg-slate-800 hover:bg-emerald-500 hover:text-slate-900 transition px-5 py-2 rounded-full text-sm font-semibold">
+            グー ✊
+          </li>
+          <li id="cho_btn"
+              class="cursor-pointer bg-slate-800 hover:bg-emerald-500 hover:text-slate-900 transition px-5 py-2 rounded-full text-sm font-semibold">
+            チョキ ✌️
+          </li>
+          <li id="par_btn"
+              class="cursor-pointer bg-slate-800 hover:bg-emerald-500 hover:text-slate-900 transition px-5 py-2 rounded-full text-sm font-semibold">
+            パー ✋
+          </li>
+        </ul>
+
+        <!-- CPUの手 / 判定表示 / 連勝カウンター -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div class="bg-slate-900/80 rounded-xl px-4 py-3 border border-slate-700 md:col-span-1">
+            <div>相手（<span id="bossNameInline" class="font-semibold">課長</span>）の出した手は？</div>
+            <div class="mt-1 text-lg">
+              「<span id="pc_hands" class="font-semibold">まだ出していません</span>」
+            </div>
+          </div>
+          <div class="bg-slate-900/80 rounded-xl px-4 py-3 border border-slate-700 md:col-span-1">
+            <div class="text-slate-300">判定</div>
+            <div id="judgment" class="mt-1 text-xl font-bold">
+              スタートボタンを押してください
+            </div>
+          </div>
+          <div class="bg-slate-900/80 rounded-xl px-4 py-3 border border-slate-700 md:col-span-1">
+            <div class="text-slate-300 flex items-center justify-between">
+              <span>連勝カウンター</span>
+              <span class="text-[10px] text-slate-400">負けるとリセット、、、</span>
+            </div>
+            <div class="mt-1 text-2xl font-extrabold tracking-widest">
+              × <span id="comboCount">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- メッセージ -->
+        <div id="message"
+             class="mt-2 text-xs text-slate-300">
+          課長から順に、全員に<strong>連続で勝利</strong>するとゲームクリアです。
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 救済ポップアップ -->
+  <div id="reliefPopup"
+       class="fixed inset-0 z-40 bg-black/70 hidden">
+    <div
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+            bg-slate-800 border border-emerald-400 rounded-xl
+            px-3 py-3 w-[260px] text-center shadow-lg">
+
+      <div class="flex flex-col items-center gap-2">
+        <img src="img/bucho.png"
+             alt="部長"
+             class="w-16 h-16 rounded-full object-cover border border-emerald-400 shadow">
+
+        <p class="text-sm font-bold leading-snug">
+          部長の根回しが発動！
+        </p>
+
+        <p class="text-xs leading-snug">
+          上位ステージでの敗北が一定回数に達しましたが、部長が水面下で社内調整してくれました😭
+        </p>
+
+        <p class="text-xs leading-snug font-semibold">
+          次回からは <strong>上位ステージスタート</strong> で再チャレンジできます！
+        </p>
+
+        <button id="reliefOkBtn"
+                class="mt-2 w-full py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400
+                      text-slate-900 text-sm font-semibold shadow">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- クリア演出オーバーレイ -->
+  <div id="clearOverlay"
+       class="fixed inset-0 z-40 bg-black/80 hidden">
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+      <div
+        class="bg-gradient-to-br from-emerald-500 via-teal-400 to-sky-400
+               text-slate-900 rounded-2xl px-6 py-6 shadow-2xl max-w-md w-[90%]
+               text-center border border-white/60">
+        <p class="text-xs font-semibold tracking-[0.2em] uppercase mb-2">
+          Mission Complete
+        </p>
+        <h2 class="text-2xl md:text-3xl font-extrabold mb-3 animate-pulse">
+          社内承認 取得成功！
+        </h2>
+        <p class="text-sm mb-4">
+          全ての承認ルートを突破し、<br class="hidden md:inline">
+          社長室会の壁を乗り越えました。
+        </p>
+        <div class="bg-white/80 rounded-xl px-4 py-3 mb-4 text-sm text-left space-y-1">
+          <div>今回の最大連勝数：
+            <span id="clearMaxCombo" class="font-bold text-lg"></span> 連勝
+          </div>
+          <div>選択した難易度：
+            <span id="clearDifficultyLabel" class="font-semibold"></span>
+          </div>
+        </div>
+        <p class="text-xs mb-1">
+          数秒後にタイトル画面へ戻ります…
+        </p>
+        <p class="text-[10px] text-slate-800/80">
+          ※お疲れさまでした。次の経伺もがんばりましょう。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="py-4 px-6 bg-slate-950/80 border-t border-slate-700/40 text-center text-xs text-slate-400">
+    © れんれん
+  </footer>
+
+   <!-- ===== 進行ロジック ===== -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+      // 上司リスト（順番がステージ順）
+      const bosses = [
+        { name: "課長",       role: "第一関門",      img: "img/kacho.png" },
+        { name: "次長",       role: "第二関門",      img: "img/jicho.png" },
+        { name: "部長",       role: "第三関門",      img: "img/bucho.png" },
+        { name: "管理部長",   role: "管理部の壁",    img: "img/kanri_bucho.png" },
+        { name: "本部長",     role: "本部のトップ",  img: "img/honbucho.png" },
+        { name: "GCEO",       role: "グループCEO",   img: "img/gceo.png" },
+        { name: "社長室会",   role: "最終関門",      img: "img/shachoshitsu.png" }
+      ];
+
+      const highRankStartIndex = 3; // 「管理部長」以上を上位ステージとして扱う
+
+      let currentBossIndex  = 0;
+      let highRankLossCount = 0;
+      let gameStarted       = false;
+      let comboCount        = 0;
+      let maxCombo          = 0;
+
+      // DOM取得
+      const approvalSteps       = document.querySelectorAll(".approval-step");
+      const reliefPopup         = document.getElementById("reliefPopup");
+      const reliefOkBtn         = document.getElementById("reliefOkBtn");
+      const startScreen         = document.getElementById("startScreen");
+      const startBtn            = document.getElementById("startBtn");
+
+      const bossImage           = document.getElementById("bossImage");
+      const bossName            = document.getElementById("bossName");
+      const bossRole            = document.getElementById("bossRole");
+      const bossNameInline      = document.getElementById("bossNameInline");
+
+      const stageLabel          = document.getElementById("stageLabel");
+      const highLossCountSpan   = document.getElementById("highLossCount");
+      const highLossLimitSpan   = document.getElementById("highLossLimit");
+      const difficultyLabel     = document.getElementById("difficultyLabel");
+
+      const pcHandsSpan         = document.getElementById("pc_hands");
+      const judgmentSpan        = document.getElementById("judgment");
+      const comboCountSpan      = document.getElementById("comboCount");
+      const messageDiv          = document.getElementById("message");
+
+      const clearOverlay        = document.getElementById("clearOverlay");
+      const clearMaxComboSpan   = document.getElementById("clearMaxCombo");
+      const clearDifficultySpan = document.getElementById("clearDifficultyLabel");
+
+      const guBtn               = document.getElementById("gu_btn");
+      const choBtn              = document.getElementById("cho_btn");
+      const parBtn              = document.getElementById("par_btn");
+
+      // パラメータ
+      function getHighRankLossThreshold() {
+        return 3; // 管理部長以上で3回負けたら救済
+      }
+      function getReliefStartIndex() {
+        return 3; // 管理部長から再スタート
+      }
+
+      // 上司表示更新
+      function updateBossView() {
+        const boss = bosses[currentBossIndex];
+
+        bossName.textContent       = boss.name;
+        bossRole.textContent       = boss.role;
+        bossNameInline.textContent = boss.name;
+        bossImage.src              = boss.img;
+
+        stageLabel.textContent =
+          boss.name + " (" + (currentBossIndex + 1) + " / " + bosses.length + ")";
+
+        highLossCountSpan.textContent = highRankLossCount;
+        highLossLimitSpan.textContent = getHighRankLossThreshold();
+
+        approvalSteps.forEach((step, index) => {
+          step.classList.remove(
+            "bg-emerald-500", "text-slate-900", "border-emerald-400",
+            "bg-slate-700/70", "text-slate-100/80"
+          );
+          if (index < currentBossIndex) {
+            step.classList.add("bg-slate-700/70", "text-slate-100/80");
+          } else if (index === currentBossIndex) {
+            step.classList.add("bg-emerald-500", "text-slate-900", "border-emerald-400");
+          }
+        });
+      }
+
+      function resetJankenView() {
+        pcHandsSpan.textContent = "まだ出していません";
+        judgmentSpan.textContent = "じゃんけんの手を選んでください";
+      }
+
+      function updateComboView() {
+        comboCountSpan.textContent = comboCount;
+      }
+
+      // 判定
+      function judge(user, cpu) {
+        if (user === cpu) return "draw";
+        if (
+          (user === 0 && cpu === 1) ||
+          (user === 1 && cpu === 2) ||
+          (user === 2 && cpu === 0)
+        ) return "win";
+        return "lose";
+      }
+
+      function handToText(hand) {
+        return ["グー ✊","チョキ ✌️","パー ✋"][hand];
+      }
+
+      // 救済ポップアップ
+      function showReliefPopup() {
+        reliefPopup.classList.remove("hidden");
+      }
+      reliefOkBtn.addEventListener("click", () => {
+        reliefPopup.classList.add("hidden");
+      });
+
+      // 勝ち
+      function onWin() {
+        comboCount++;
+        if (comboCount > maxCombo) maxCombo = comboCount;
+        updateComboView();
+
+        // 最終ステージ
+        if (currentBossIndex === bosses.length - 1) {
+          judgmentSpan.textContent = "おめでとうございます！ついに社長室会を突破しました！";
+
+          clearMaxComboSpan.textContent   = maxCombo || comboCount;
+          clearDifficultySpan.textContent = "ノーマル";
+
+          clearOverlay.classList.remove("hidden");
+
+          messageDiv.innerHTML =
+            "今回の最大連勝数は <strong>" + (maxCombo || comboCount) + " 連勝</strong> でした。";
+
+          setTimeout(() => location.reload(), 6000);
+          return;
+        }
+
+        currentBossIndex++;
+        judgmentSpan.textContent = "勝ち！ 次は「" + bosses[currentBossIndex].name + "」です🔥";
+        messageDiv.textContent   = "連勝を続けて社長室会までたどり着きましょう。";
+        updateBossView();
+      }
+
+      // 負け
+      function onLose() {
+        judgmentSpan.textContent =
+          "負け… 「" + bosses[currentBossIndex].name + "」に敗北しました😭";
+
+        comboCount = 0;
+        updateComboView();
+
+        const threshold = getHighRankLossThreshold();
+
+        if (currentBossIndex >= highRankStartIndex) {
+          highRankLossCount++;
+
+          if (highRankLossCount === threshold) {
+            messageDiv.innerHTML =
+              "上位ステージでの敗北が一定回数に達しましたが、部長が根回ししてくれます！<br>" +
+              "次回から<strong>" + bosses[getReliefStartIndex()].name + "</strong>からスタートできます！";
+            currentBossIndex = getReliefStartIndex();
+            updateBossView();
+            showReliefPopup();
+            return;
+          }
+
+          if (highRankLossCount > threshold) {
+            messageDiv.innerHTML =
+              "今回は負けてしまいましたが、<strong>" +
+              bosses[getReliefStartIndex()].name +
+              "</strong>から再チャレンジできます😎";
+            currentBossIndex = getReliefStartIndex();
+            updateBossView();
+            return;
+          }
+        }
+
+        messageDiv.innerHTML =
+          "ステージは<strong>課長</strong>に戻ります。<br>再度、連勝を目指しましょう...！";
+        currentBossIndex = 0;
+        updateBossView();
+      }
+
+      // あいこ
+      function onDraw() {
+        judgmentSpan.textContent = "あいこです！もう一度勝負！";
+        messageDiv.textContent   = "同じ相手ともう一度勝負します。";
+      }
+
+      // プレイ処理
+      function play(userHand) {
+        if (!gameStarted) return;
+
+        const cpuHand = Math.floor(Math.random() * 3);
+        pcHandsSpan.textContent = handToText(cpuHand);
+
+        const result = judge(userHand, cpuHand);
+        if (result === "win") onWin();
+        else if (result === "lose") onLose();
+        else onDraw();
+      }
+
+      // スタートボタン
+      startBtn.addEventListener("click", function () {
+        gameStarted       = true;
+        highRankLossCount = 0;
+        comboCount        = 0;
+        maxCombo          = 0;
+
+        updateComboView();
+
+        startScreen.classList.add("hidden");
+        resetJankenView();
+        updateBossView();
+        messageDiv.textContent = "まずは課長に勝ちましょう!";
+
+        difficultyLabel.textContent = "ノーマル";
+      });
+
+      // ボタンイベント
+      guBtn.addEventListener("click", ()  => play(0));
+      choBtn.addEventListener("click", () => play(1));
+      parBtn.addEventListener("click", () => play(2));
+
+      // 初期表示
+      difficultyLabel.textContent = "ノーマル";
+      highLossLimitSpan.textContent = getHighRankLossThreshold();
+      updateComboView();
+      updateBossView();
+    });
+  </script>
+
+</body>
+</html>
